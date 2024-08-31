@@ -1,42 +1,31 @@
+import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useState } from "react";
+
+const fetchProducts = async () => {
+  const response = await fetch("https://dummyjson.com/products");
+  const data = await response.json();
+  return data.products;
+};
 
 const Products = () => {
-  const [products, setProducts] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [imagesLoading, setImagesLoading] = useState({});
-  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const response = await fetch("https://dummyjson.com/products");
-        const data = await response.json();
-        console.log(data.products);
-        setProducts(data.products);
-        setIsLoading(false);
-      } catch (error) {
-        setError("An error occurred while fetching data", error);
-        setIsLoading(false);
-      }
-    };
-    fetchProducts();
-  }, []);
-
-  const handleImageLoad = (id) => {
-    setImagesLoading((prevState) => ({
-      ...prevState,
-      [id]: false,
-    }));
-  };
+  const {
+    isLoading,
+    error,
+    data: products,
+  } = useQuery({
+    queryKey: ["products"],
+    queryFn: fetchProducts,
+    staleTime: 10000,
+  });
 
   if (isLoading) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-opacity-75 z-50">
-        <Loader2 className="animate-spin w-16 h-16" />
+        <Loader2 className="animate-spin w-16 h-16 text-gray-600" />
       </div>
     );
   }
@@ -44,11 +33,16 @@ const Products = () => {
   if (error) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <p className="text-red-500">{error}</p>
+        <p className="text-red-500">{error.message}</p>
       </div>
     );
   }
-
+  const handleImageLoad = (id) => {
+    setImagesLoading((prevState) => ({
+      ...prevState,
+      [id]: false,
+    }));
+  };
   return (
     <div className="bg-white">
       <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 sm:py-24 lg:max-w-7xl lg:px-8">
